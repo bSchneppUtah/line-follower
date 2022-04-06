@@ -67,6 +67,14 @@ void pwm_setDutyCycle(uint8_t duty) {
     }
 }
 
+// FIXME: Actually set up TIM15
+void pwm_setDutyCycle2(uint8_t duty) {
+    if(duty <= 100) {
+        TIM15->CCR1 = ((uint32_t)duty*TIM15->ARR)/100;  // Use linear transform to produce CCR1 value
+        // (CCR1 == "pulse" parameter in PWM struct used by peripheral library)
+    }
+}
+
 // Sets up encoder interface to read motor speed
 void encoder_init(void) {
     
@@ -211,6 +219,7 @@ void PI_update(void) {
      /// TODO: Clamp the output value between 0 and 100 
 		 output = (output > 100) ? 100 : output;
     pwm_setDutyCycle(output);
+    pwm_setDutyCycle2(output);
     duty_cycle = output;            // For debug viewing
 
     // Read the ADC value for current monitoring, actual conversion into meaningful units 
