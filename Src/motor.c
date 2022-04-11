@@ -35,6 +35,13 @@ void pwm_init(void) {
     GPIOA->AFR[0] &= 0xFFF0FFFF; // clear PA4 bits,
     GPIOA->AFR[0] |= (1 << 18);
 
+    // Setup pin PA2 to similarly be set up, but for TIM15
+    GPIOA->MODER |= (1 << 5);
+    GPIOA->MODER &= ~(1 << 4);
+
+    // Set PA2 to AF0,
+    GPIOA->AFR[0] &= ~(0xF << 8); // clear PA4 bits,
+
     // Set up a PA5, PA6 as GPIO output pins for motor direction control
     GPIOA->MODER &= 0xFFFFC3FF; // clear PA5, PA6 bits,
     GPIOA->MODER |= (1 << 10) | (1 << 12);
@@ -57,6 +64,21 @@ void pwm_init(void) {
     TIM14->CCR1 = 0;                        // Start PWM at 0% duty cycle
     
     TIM14->CR1 |= TIM_CR1_CEN;              // Enable timer
+
+    // Set up PWM timer
+    RCC->APB2ENR |= RCC_APB2ENR_TIM15EN;
+    TIM15->CR1 = 0;                         // Clear control registers
+    TIM15->CCMR1 = 0;                       // (prevents having to manually clear bits)
+    TIM15->CCER = 0;
+
+    // Set output-compare CH1 to PWM1 mode and enable CCR1 preload buffer
+    TIM15->CCMR1 |= (TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1PE);
+    TIM15->CCER |= TIM_CCER_CC1E;           // Enable capture-compare channel 1
+    TIM15->PSC = 1;                         // Run timer on 24Mhz
+    TIM15->ARR = 1200;                      // PWM at 20kHz
+    TIM15->CCR1 = 0;                        // Start PWM at 0% duty cycle
+    
+    TIM15->CR1 |= TIM_CR1_CEN;              // Enable timer
 }
 
 // Set the duty cycle of the PWM, accepts (0-100)
