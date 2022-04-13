@@ -8,6 +8,38 @@
 #include "stm32f072xb.h"
 #include "stm32f0xx_hal.h"
 
+/* New stuff */
+void InitGPIOCPWM(uint32_t PinIndex)
+{
+	const uint32_t Output = GPIO_MODE_AF_PP;
+	const uint32_t Speed = GPIO_SPEED_FREQ_LOW;
+	const uint32_t Pull = GPIO_NOPULL;
+
+	/* Configure output type */
+	uint32_t OutputMode = GPIOC->MODER;
+	OutputMode &= ~(GPIO_MODER_MODER0 << (0x2 * PinIndex));
+	OutputMode |= (Output & 0x03) << (0x2 * PinIndex);
+	GPIOC->MODER = OutputMode;
+
+	/* Configure i/o output type	*/
+	uint32_t TypeMode = GPIOC->OTYPER;
+	TypeMode &= ~(GPIO_OTYPER_OT_0 << (0x2 * PinIndex));
+	TypeMode |= (((GPIO_MODE_OUTPUT_PP & 0x10) >> 4U) << (0x2 * PinIndex));
+	GPIOC->OTYPER = TypeMode;
+
+	/* Configure i/o output speed */
+	uint32_t SpeedMode = GPIOC->OSPEEDR;
+	SpeedMode &= ~(GPIO_OSPEEDER_OSPEEDR0 << (0x2 * PinIndex));
+	SpeedMode |= (Speed << (0x2 * PinIndex));
+	GPIOC->OSPEEDR = SpeedMode;
+
+	/* Setup pull-up or pull-down for this pin */
+	uint32_t PullUpDownMode = GPIOC->PUPDR;
+	PullUpDownMode &= ~(GPIO_PUPDR_PUPDR0 << (0x2 * PinIndex));
+	PullUpDownMode |= ((Pull) << (0x2 * PinIndex));
+	GPIOC->PUPDR = PullUpDownMode;
+}
+
 /* -------------------------------------------------------------------------------------------------------------
  *  Global Variable Declarations
  *  -------------------------------------------------------------------------------------------------------------
@@ -69,6 +101,7 @@ int main(int argc, char* argv[]) {
     button_init();                          // Initialize button
     target_rpm = 130;
     motor_init();                           // Initialize motor code
+    InitGPIOCPWM(9);
     while (1) 
     {
         HAL_Delay(128);                      // Delay 1/8 second

@@ -66,19 +66,19 @@ void pwm_init(void) {
     TIM14->CR1 |= TIM_CR1_CEN;              // Enable timer
 
     // Set up PWM timer
-    RCC->APB2ENR |= RCC_APB2ENR_TIM15EN;
-    TIM15->CR1 = 0;                         // Clear control registers
-    TIM15->CCMR1 = 0;                       // (prevents having to manually clear bits)
-    TIM15->CCER = 0;
+    RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
+    TIM3->CR1 = 0;                         // Clear control registers
+    TIM3->CCMR1 = 0;                       // (prevents having to manually clear bits)
+    TIM3->CCER = 0;
 
     // Set output-compare CH1 to PWM1 mode and enable CCR1 preload buffer
-    TIM15->CCMR1 |= (TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1PE);
-    TIM15->CCER |= TIM_CCER_CC1E;           // Enable capture-compare channel 1
-    TIM15->PSC = 1;                         // Run timer on 24Mhz
-    TIM15->ARR = 1200;                      // PWM at 20kHz
-    TIM15->CCR1 = 0;                        // Start PWM at 0% duty cycle
+    TIM3->CCMR2 |= (TIM_CCMR2_OC4M_2 | TIM_CCMR2_OC4M_1 | TIM_CCMR2_OC4PE);
+    TIM3->CCER |= TIM_CCER_CC4E;           // Enable capture-compare channel 1
+    TIM3->PSC = 1;                         // Run timer on 24Mhz
+    TIM3->ARR = 1200;                      // PWM at 20kHz
+    TIM3->CCR1 = 0;                        // Start PWM at 0% duty cycle
     
-    TIM15->CR1 |= TIM_CR1_CEN;              // Enable timer
+    TIM3->CR1 |= TIM_CR1_CEN;              // Enable timer
 }
 
 // Set the duty cycle of the PWM, accepts (0-100)
