@@ -96,10 +96,10 @@ void pwm_setDutyCycle(uint8_t duty) {
     }
 }
 
-// FIXME: Actually set up TIM15
+// FIXME: Actually set up TIM3
 void pwm_setDutyCycle2(uint8_t duty) {
     if(duty <= 100) {
-        TIM15->CCR1 = ((uint32_t)duty*TIM15->ARR)/100;  // Use linear transform to produce CCR1 value
+        TIM3->CCR1 = ((uint32_t)duty*TIM3->ARR)/100;  // Use linear transform to produce CCR1 value
         // (CCR1 == "pulse" parameter in PWM struct used by peripheral library)
     }
 }
