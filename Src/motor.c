@@ -12,8 +12,15 @@ volatile int16_t error_integral = 0;    // Integrated error signal
 volatile uint8_t duty_cycle = 0;    	// Output PWM duty cycle
 volatile int16_t target_rpm = 0;    	// Desired speed target
 volatile int16_t motor_speed = 0;   	// Measured motor speed
-volatile int8_t adc_value = 0;      	// ADC measured motor current
 volatile int16_t error = 0;         	// Speed error signal
+
+volatile int16_t error_integral2 = 0;    // Integrated error signal
+volatile uint8_t duty_cycle2 = 0;    	// Output PWM duty cycle
+volatile int16_t target_rpm2 = 0;    	// Desired speed target
+volatile int16_t motor_speed2 = 0;   	// Measured motor speed
+volatile int16_t error2 = 0;         	// Speed error signal
+
+volatile int8_t adc_value = 0;      	// ADC measured motor current
 volatile uint8_t Kp = 1;            	// Proportional gain
 volatile uint8_t Ki = 1;            	// Integral gain
 
@@ -151,6 +158,7 @@ void TIM6_DAC_IRQHandler(void) {
     TIM2->CNT = 0x7FFF; // Reset back to center point    
     // Call the PI update function
     PI_update();
+    PI_update2();
 
     TIM6->SR &= ~TIM_SR_UIF;        // Acknowledge the interrupt
 }
@@ -241,7 +249,6 @@ void PI_update(void) {
      /// TODO: Clamp the output value between 0 and 100 
 		 output = (output > 100) ? 100 : output;
     pwm_setDutyCycle(output);
-    pwm_setDutyCycle2(output);
     duty_cycle = output;            // For debug viewing
 
     // Read the ADC value for current monitoring, actual conversion into meaningful units 
@@ -249,4 +256,17 @@ void PI_update(void) {
     if(ADC1->ISR & ADC_ISR_EOC) {   // If the ADC has new data for us
         adc_value = ADC1->DR;       // Read the motor current for debug viewing
     }
+}
+
+
+void PI_update2(void) 
+{
+    error = (target_rpm2*2) - (motor_speed2); 
+    error_integral2 += Ki*error2;
+    error_integral2 = (error_integral2 > 2248) ? 2248 : error_integral2;
+    int16_t output2 = (Kp * error2) + error_integral2;
+    output2 = (output2 / 22);
+    output2 = (output2 > 100) ? 100 : output2;
+    pwm_setDutyCycle2(output2);
+    duty_cycle2 = output2;
 }
