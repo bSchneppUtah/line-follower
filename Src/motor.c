@@ -104,16 +104,8 @@ void pwm_setDutyCycle2(uint8_t duty) {
     }
 }
 
-// Sets up encoder interface to read motor speed
-void encoder_init(void) {
-    
-    // Set up encoder input pins (TIMER 3 CH1 and CH2)
-    RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
-
-    GPIOB->MODER &= ~(GPIO_MODER_MODER4_0 | GPIO_MODER_MODER5_0);
-    GPIOB->MODER |= (GPIO_MODER_MODER4_1 | GPIO_MODER_MODER5_1);
-    GPIOB->AFR[0] |= ( (1 << 16) | (1 << 20) );
-
+void tim3_init()
+{
     // Set up encoder interface (TIM3 encoder input mode)
     RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
     TIM3->CCMR1 = 0;
@@ -128,7 +120,10 @@ void encoder_init(void) {
     // (Could also cast unsigned register to signed number to get negative numbers if it rotates backwards past zero
     //  just another option, the mid-bias is a bit simpler to understand though.)
     TIM3->CR1 |= TIM_CR1_CEN;                               // Enable timer
+}
 
+void tim6_init()
+{
     // Configure a second timer (TIM6) to fire an ISR on update event
     // Used to periodically check and update speed variable
     RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;
@@ -142,6 +137,20 @@ void encoder_init(void) {
 
     NVIC_EnableIRQ(TIM6_DAC_IRQn);          // Enable interrupt in NVIC
     NVIC_SetPriority(TIM6_DAC_IRQn,2);
+}
+
+// Sets up encoder interface to read motor speed
+void encoder_init(void) {
+    
+    // Set up encoder input pins (TIMER 3 CH1 and CH2)
+    RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
+
+    GPIOB->MODER &= ~(GPIO_MODER_MODER4_0 | GPIO_MODER_MODER5_0);
+    GPIOB->MODER |= (GPIO_MODER_MODER4_1 | GPIO_MODER_MODER5_1);
+    GPIOB->AFR[0] |= ( (1 << 16) | (1 << 20) );
+
+    tim3_init();
+    tim6_init();
 }
 
 
