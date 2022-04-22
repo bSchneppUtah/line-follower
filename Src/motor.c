@@ -106,6 +106,11 @@ void pwm_setDutyCycle2(uint8_t duty) {
 
 void tim3_init()
 {
+    RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
+    GPIOB->MODER &= ~(GPIO_MODER_MODER4_0 | GPIO_MODER_MODER5_0);
+    GPIOB->MODER |= (GPIO_MODER_MODER4_1 | GPIO_MODER_MODER5_1);
+    GPIOB->AFR[0] |= ( (1 << 16) | (1 << 20) );
+
     // Set up encoder interface (TIM3 encoder input mode)
     RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
     TIM3->CCMR1 = 0;
@@ -140,14 +145,10 @@ void tim6_init()
 }
 
 // Sets up encoder interface to read motor speed
-void encoder_init(void) {
-    
+void encoder_init(void) 
+{
     // Set up encoder input pins (TIMER 3 CH1 and CH2)
-    RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
-
-    GPIOB->MODER &= ~(GPIO_MODER_MODER4_0 | GPIO_MODER_MODER5_0);
-    GPIOB->MODER |= (GPIO_MODER_MODER4_1 | GPIO_MODER_MODER5_1);
-    GPIOB->AFR[0] |= ( (1 << 16) | (1 << 20) );
+    RCC->AHBENR |= RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIOCEN;
 
     tim3_init();
     tim6_init();
@@ -155,7 +156,8 @@ void encoder_init(void) {
 
 
 // Encoder interrupt to calculate motor speed, also manages PI controller
-void TIM6_DAC_IRQHandler(void) {
+void TIM6_DAC_IRQHandler(void) 
+{
     /* Calculate the motor speed in raw encoder counts
      * Note the motor speed is signed! Motor can be run in reverse.
      * Speed is measured by how far the counter moved from center point
