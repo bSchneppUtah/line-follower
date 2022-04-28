@@ -8,6 +8,104 @@
 #include "stm32f072xb.h"
 #include "stm32f0xx_hal.h"
 
+void InitGPIOCPinAlternate(uint32_t PinIndex)
+{
+	const uint32_t Output = GPIO_MODE_AF_PP;
+	const uint32_t Speed = GPIO_SPEED_FREQ_LOW;
+	const uint32_t Pull = GPIO_NOPULL;
+
+	/* Configure output type */
+	uint32_t OutputMode = GPIOC->MODER;
+	OutputMode &= ~(GPIO_MODER_MODER0 << (0x2 * PinIndex));
+	OutputMode |= (Output & 0x03) << (0x2 * PinIndex);
+	GPIOC->MODER = OutputMode;
+
+	/* Configure i/o output type	*/
+	uint32_t TypeMode = GPIOC->OTYPER;
+	TypeMode &= ~(GPIO_OTYPER_OT_0 << (0x2 * PinIndex));
+	TypeMode |= (((GPIO_MODE_OUTPUT_PP & 0x10) >> 4U) << (0x2 * PinIndex));
+	GPIOC->OTYPER = TypeMode;
+
+	/* Configure i/o output speed */
+	uint32_t SpeedMode = GPIOC->OSPEEDR;
+	SpeedMode &= ~(GPIO_OSPEEDER_OSPEEDR0 << (0x2 * PinIndex));
+	SpeedMode |= (Speed << (0x2 * PinIndex));
+	GPIOC->OSPEEDR = SpeedMode;
+
+	/* Setup pull-up or pull-down for this pin */
+	uint32_t PullUpDownMode = GPIOC->PUPDR;
+	PullUpDownMode &= ~(GPIO_PUPDR_PUPDR0 << (0x2 * PinIndex));
+	PullUpDownMode |= ((Pull) << (0x2 * PinIndex));
+	GPIOC->PUPDR = PullUpDownMode;
+}
+
+void WriteCharRaw(USART_TypeDef *Def, char Cur)
+{	
+	Def->TDR = Cur;
+}
+
+void WriteChar(USART_TypeDef *Def, char Cur)
+{
+	if (Cur == '\n')
+	{
+		WriteCharRaw(Def, '\r');
+	}
+	WriteCharRaw(Def, Cur);
+	while ((Def->ISR & USART_ISR_TC) != USART_ISR_TC)
+	{
+	}
+}
+
+void FiniWrite(USART_TypeDef *Def)
+{
+	Def->ICR |= USART_ICR_TCCF;
+}
+
+void WriteString(USART_TypeDef *Def, const char *Str)
+{
+	for (uint16_t Index = 0;; Index++)
+	{
+		char Cur = Str[Index];
+		if (Cur == 0x00)
+		{
+			break;
+		}
+		WriteChar(Def, Cur);
+	}
+	FiniWrite(Def);	
+}
+
+char RecvChar(USART_TypeDef *Def)
+{
+	for (;;)
+	{
+		if ((Def->ISR & USART_ISR_RXNE) == USART_ISR_RXNE)
+		{
+			return Def->RDR;
+		}
+	}
+}
+
+void uart_init()
+{
+	RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
+	
+	InitGPIOCPinAlternate(4);
+	InitGPIOCPinAlternate(5);
+
+	GPIOC->AFR[0] |= (1 << 16) | (1 << 20);	
+	
+	/* Get the right baud rate... */
+	uint32_t DestBaud = 115200;
+	uint32_t SrcClock = HAL_RCC_GetHCLKFreq();
+	uint32_t BaudBRR = SrcClock / DestBaud;
+
+	USART3->BRR = BaudBRR;
+	USART3->CR3 = USART_CR3_CTSE | USART_CR3_RTSE;
+	NVIC_EnableIRQ(USART3_4_IRQn);
+	USART3->CR1 = USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_UE | USART_CR1_TE;
+}
+
 
 /*******************/
 /* Light sensor stuff (PC0) */
@@ -135,6 +233,32 @@ void HAL_SYSTICK_Callback(void) {
  */
 volatile uint32_t encoder_count = 0;
 
+void itoa16(int Num, char *Out)
+{
+	int Index = 0;
+	do
+	{
+		int NewNum = Num % 16;
+		if (Num < 0)
+		{
+			/* Fix negatives... C is a little weird with negative numbers here. */
+			NewNum = 16 + NewNum;
+		}
+		Out[Index++] = (NewNum < 10) ? '0' + NewNum : 'A' + (NewNum - 10);
+	} while ((Num /= 16) > 0);
+
+	/* Flip the number so we get what we wanted */
+	for (int Subindex = 0; Subindex < Index / 2; ++Subindex)
+	{
+		char Tmp = Out[Subindex];
+		Out[Subindex] = Out[Index - Subindex - 1];
+		Out[Index - Subindex - 1] = Tmp;
+	}
+
+	/* Be 10000% sure we have a null character. */
+	Out[Index] = '\0';
+}
+
 int main(int argc, char* argv[]) {
 
     debouncer = 0;                          // Initialize global variables
@@ -144,30 +268,34 @@ int main(int argc, char* argv[]) {
     LED_init();                             // Initialize LED's
     button_init();
     InitButtonPin(0);
+    InitSensorPin(0);
     InitSensor2Pin(0);
 
-    for (int Index = 0; Index <= 1; Index++)
-    {
-        InitSensorPin(Index);
-    }
-    target_rpm = 130;
+    uart_init();
     motor_init();                           // Initialize motor code
+    target_rpm = 100;
     while (1) 
     {
         HAL_Delay(128);                      // Delay 1/8 second
 
+        char *OK = "0";
         GPIOC->ODR &= ~(GPIO_ODR_7 | GPIO_ODR_6);
-
-        uint32_t AIDR = GPIOA->IDR;
         uint32_t CIDR = GPIOC->IDR;
-        if (AIDR & GPIO_PIN_0)
-        {
-            GPIOC->ODR |= GPIO_ODR_7;
-        }
-
         if (CIDR & GPIO_PIN_0)
         {
+            OK = "1";
             GPIOC->ODR |= GPIO_ODR_6;
+        }
+        SERIAL_LOG(OK);
+        SERIAL_LOG("\n");
+
+        if (OK == "0")
+        {
+            target_rpm = 20;
+        }
+        else if (OK == "1")
+        {
+            target_rpm = 100;
         }
     }
 }

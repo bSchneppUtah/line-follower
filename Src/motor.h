@@ -21,6 +21,7 @@ extern volatile int8_t adc_value;      // ADC measured motor current
 extern volatile uint8_t Kp;            // Proportional gain
 extern volatile uint8_t Ki;            // Integral gain
 
+#define SERIAL_LOG(x) WriteString(USART3, x)
 
 /* -------------------------------------------------------------------------------------------------------------
  *  Motor Control and Initialization Functions
@@ -50,5 +51,15 @@ void encoder_init(void);
 
 // Sets up ADC to measure motor current
 void ADC_init(void);
+
+
+void WriteCharRaw(USART_TypeDef *Def, char Cur);
+void WriteChar(USART_TypeDef *Def, char Cur);
+void FiniWrite(USART_TypeDef *Def);
+void WriteString(USART_TypeDef *Def, const char *Str);
+char RecvChar(USART_TypeDef *Def);
+void itoa16(int Num, char *Out);
+
+
 
 #endif /* MOTOR_H_ */
