@@ -18,11 +18,113 @@ volatile int8_t adc_value = 0;      	// ADC measured motor current
 volatile uint8_t Kp = 1;            	// Proportional gain
 volatile uint8_t Ki = 1;            	// Integral gain
 
+
+void InitGPIOCPinAlternate(uint32_t PinIndex)
+{
+	const uint32_t Output = GPIO_MODE_AF_PP;
+	const uint32_t Speed = GPIO_SPEED_FREQ_LOW;
+	const uint32_t Pull = GPIO_NOPULL;
+
+	/* Configure output type */
+	uint32_t OutputMode = GPIOC->MODER;
+	OutputMode &= ~(GPIO_MODER_MODER0 << (0x2 * PinIndex));
+	OutputMode |= (Output & 0x03) << (0x2 * PinIndex);
+	GPIOC->MODER = OutputMode;
+
+	/* Configure i/o output type	*/
+	uint32_t TypeMode = GPIOC->OTYPER;
+	TypeMode &= ~(GPIO_OTYPER_OT_0 << (0x2 * PinIndex));
+	TypeMode |= (((GPIO_MODE_OUTPUT_PP & 0x10) >> 4U) << (0x2 * PinIndex));
+	GPIOC->OTYPER = TypeMode;
+
+	/* Configure i/o output speed */
+	uint32_t SpeedMode = GPIOC->OSPEEDR;
+	SpeedMode &= ~(GPIO_OSPEEDER_OSPEEDR0 << (0x2 * PinIndex));
+	SpeedMode |= (Speed << (0x2 * PinIndex));
+	GPIOC->OSPEEDR = SpeedMode;
+
+	/* Setup pull-up or pull-down for this pin */
+	uint32_t PullUpDownMode = GPIOC->PUPDR;
+	PullUpDownMode &= ~(GPIO_PUPDR_PUPDR0 << (0x2 * PinIndex));
+	PullUpDownMode |= ((Pull) << (0x2 * PinIndex));
+	GPIOC->PUPDR = PullUpDownMode;
+}
+
+void WriteCharRaw(USART_TypeDef *Def, char Cur)
+{
+	if (Cur == '\n')
+	{
+		WriteCharRaw(Def, '\r');
+	}
+	
+	Def->TDR = Cur;
+}
+
+void WriteChar(USART_TypeDef *Def, char Cur)
+{
+	WriteCharRaw(Def, Cur);
+	while ((Def->ISR & USART_ISR_TC) != USART_ISR_TC)
+	{
+	}
+}
+
+void FiniWrite(USART_TypeDef *Def)
+{
+	Def->ICR |= USART_ICR_TCCF;
+}
+
+void WriteString(USART_TypeDef *Def, const char *Str)
+{
+	for (uint16_t Index = 0;; Index++)
+	{
+		char Cur = Str[Index];
+		if (Cur == 0x00)
+		{
+			break;
+		}
+		WriteChar(Def, Cur);
+	}
+	FiniWrite(Def);	
+}
+
+char RecvChar(USART_TypeDef *Def)
+{
+	for (;;)
+	{
+		if ((Def->ISR & USART_ISR_RXNE) == USART_ISR_RXNE)
+		{
+			return Def->RDR;
+		}
+	}
+}
+
+void uart_init()
+{
+	RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
+	
+	InitGPIOCPinAlternate(4);
+	InitGPIOCPinAlternate(5);
+
+	GPIOC->AFR[0] |= (1 << 16) | (1 << 20);	
+	
+	/* Get the right baud rate... */
+	uint32_t DestBaud = 115200;
+	uint32_t SrcClock = HAL_RCC_GetHCLKFreq();
+	uint32_t BaudBRR = SrcClock / DestBaud;
+
+	USART3->BRR = BaudBRR;
+	USART3->CR3 = USART_CR3_CTSE | USART_CR3_RTSE;
+	NVIC_EnableIRQ(USART3_4_IRQn);
+	USART3->CR1 = USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_UE | USART_CR1_TE;
+}
+
+
 // Sets up the entire motor drive system
 void motor_init(void) {
     pwm_init();
     encoder_init();
     ADC_init();
+    uart_init();
 }
 
 void setup_tim14(void)

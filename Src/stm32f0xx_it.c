@@ -98,6 +98,11 @@ void WriteAsyncChar(USART_TypeDef *Def, char Cur)
 
 void USART3_4_IRQHandler(void)
 {
+	char Current = '\0';
+	if ((USART3->ISR & USART_ISR_RXNE) == USART_ISR_RXNE)
+	{
+		Current = USART3->RDR;
+	}
 	USART3->ICR |= (USART_ISR_ORE | USART_ISR_RXNE);
 }
 
