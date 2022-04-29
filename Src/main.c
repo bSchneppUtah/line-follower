@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "led.h"
 #include "motor.h"
 #include "stm32f0xx.h"
 #include "stm32f072xb.h"
@@ -42,6 +43,9 @@ void InitGPIOCPinAlternate(uint32_t PinIndex)
 void WriteCharRaw(USART_TypeDef *Def, char Cur)
 {	
 	Def->TDR = Cur;
+    while ((Def->ISR & USART_ISR_TC) != USART_ISR_TC)
+	{
+	}
 }
 
 void WriteChar(USART_TypeDef *Def, char Cur)
@@ -51,14 +55,11 @@ void WriteChar(USART_TypeDef *Def, char Cur)
 		WriteCharRaw(Def, '\r');
 	}
 	WriteCharRaw(Def, Cur);
-	while ((Def->ISR & USART_ISR_TC) != USART_ISR_TC)
-	{
-	}
 }
 
 void FiniWrite(USART_TypeDef *Def)
 {
-	Def->ICR |= USART_ICR_TCCF;
+	
 }
 
 void WriteString(USART_TypeDef *Def, const char *Str)
@@ -72,7 +73,7 @@ void WriteString(USART_TypeDef *Def, const char *Str)
 		}
 		WriteChar(Def, Cur);
 	}
-	FiniWrite(Def);	
+	Def->ICR |= USART_ICR_TCCF;	
 }
 
 char RecvChar(USART_TypeDef *Def)
@@ -84,6 +85,18 @@ char RecvChar(USART_TypeDef *Def)
 			return Def->RDR;
 		}
 	}
+}
+
+char RecvCharTimeout(USART_TypeDef *Def, uint16_t Timeout)
+{
+	for (uint16_t Time = 0; Time < Timeout; Time++)
+	{
+		if ((Def->ISR & USART_ISR_RXNE) == USART_ISR_RXNE)
+		{
+			return Def->RDR;
+		}
+	}
+    return '\0';
 }
 
 void uart_init()
@@ -177,6 +190,36 @@ void InitSensor2Pin(uint32_t PinIndex)
     {
         GPIOC->AFR[1] &= ~(0xF << (4 * (PinIndex-8)));
     }
+}
+
+#define right
+
+void LEDsOn()
+{
+    GPIOC->ODR |= GPIO_ODR_6;
+    GPIOC->ODR |= GPIO_ODR_7;
+#if defined(right)
+    GPIOC->ODR |= GPIO_ODR_8;
+#else
+    GPIOC->ODR |= GPIO_ODR_9;
+#endif
+}
+
+void LEDsOff()
+{
+    GPIOC->ODR &= ~GPIO_ODR_6;
+    GPIOC->ODR &= ~GPIO_ODR_7;
+#if defined(right)
+    GPIOC->ODR |= GPIO_ODR_8;
+#else
+    GPIOC->ODR |= GPIO_ODR_9;
+#endif
+}
+
+static char LEDContent = '0';
+void SignalLEDs(char o)
+{
+    LEDContent = o;
 }
 
 /* -------------------------------------------------------------------------------------------------------------
@@ -273,29 +316,37 @@ int main(int argc, char* argv[]) {
 
     uart_init();
     motor_init();                           // Initialize motor code
-    target_rpm = 100;
+    target_rpm = 0;
+    SERIAL_LOG("Link start!!!!!\n");
     while (1) 
     {
         HAL_Delay(128);                      // Delay 1/8 second
 
-        char *OK = "0";
-        GPIOC->ODR &= ~(GPIO_ODR_7 | GPIO_ODR_6);
+        char OK = 0;
         uint32_t CIDR = GPIOC->IDR;
         if (CIDR & GPIO_PIN_0)
         {
-            OK = "1";
-            GPIOC->ODR |= GPIO_ODR_6;
+            OK = 1;
         }
-        SERIAL_LOG(OK);
-        SERIAL_LOG("\n");
 
-        if (OK == "0")
+        if (OK == 0)
         {
-            target_rpm = 20;
+            target_rpm = 15;
+            SERIAL_LOG("1");
         }
-        else if (OK == "1")
+        else if (OK == 1)
         {
-            target_rpm = 100;
+            target_rpm = 0;
+            SERIAL_LOG("0");
+        }
+
+        if (LEDContent == '0')
+        {
+            LEDsOn();
+        }
+        else
+        {
+            LEDsOff();
         }
     }
 }

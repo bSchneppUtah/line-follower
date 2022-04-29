@@ -103,6 +103,7 @@ void USART3_4_IRQHandler(void)
 	{
 		Current = USART3->RDR;
 	}
+	SignalLEDs(Current);
 	USART3->ICR |= (USART_ISR_ORE | USART_ISR_RXNE);
 }
 

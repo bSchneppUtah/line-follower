@@ -61,5 +61,8 @@ char RecvChar(USART_TypeDef *Def);
 void itoa16(int Num, char *Out);
 
 
+void SignalLEDs(char o);
+void LEDsOn();
+void LEDSOff();
 
 #endif /* MOTOR_H_ */
