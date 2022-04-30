@@ -22,5 +22,5 @@ Code will need to be written to accept The IR signal and turn on/off the correct
 
 Combining the systems should create a functioning line followr if done properly. 
 
-
+The zip only contains files related to the motor driver. 
   
