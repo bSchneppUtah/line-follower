@@ -19,9 +19,9 @@ For both STM32 boards, the output for the sensor modules is read as input in PC0
 |2248 47:1 Encoder Motor|  2 |  ADD ME |
 |STM32F0 Development Board|  2 |https://www.digikey.com/en/products/detail/stmicroelectronics/STM32F0DISCOVERY/3045359|
 |IR Sensor|  2 |https://www.amazon.com/HiLetgo-Infrared-Avoidance-Reflective-Photoelectric/dp/B07W97H2WS|
-|Wheels | 2 | ADD ME |
+|Wheels | 2 | https://www.amazon.com/Smart-Chassis-Motors-Encoder-Battery/dp/B01LXY7CM3/ref=sr_1_3?keywords=emo+smart+robot+car+chassis+kit&qid=1651531657&sprefix=EMO+smart+robot+%2Caps%2C129&sr=8-3 |
 |Motor Drivers | 2 | See HW4 Solution |
-|Chassis | 1 | 3D print or adapt acrylic frame|
+|Chassis | 1 | 3D print or adapt acrylic frame & https://www.amazon.com/Smart-Chassis-Motors-Encoder-Battery/dp/B01LXY7CM3/ref=sr_1_3?keywords=emo+smart+robot+car+chassis+kit&qid=1651531657&sprefix=EMO+smart+robot+%2Caps%2C129&sr=8-3|
 |Jumper Wires | 23 | https://www.amazon.com/EDGELEC-Breadboard-Optional-Assorted-Multicolored/dp/B07GD2BWPY
 |Dark-Color Tape | 1 Roll | https://www.amazon.com/Gorilla-Tape-Mini-Travel-Black/dp/B01M2AAGTZ
 | 12V AC Wall Adapter | 2 | https://www.amazon.com/TMEZON-Power-Adapter-Supply-2-1mm/dp/B00Q2E5IXW/
