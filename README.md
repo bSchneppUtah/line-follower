@@ -29,13 +29,13 @@ For both STM32 boards, the output for the sensor modules is read as input in PC0
 
 ### Wiring Diagram
 The wiring diagram to set the board up is as follows:
-[Wiring Diagram](WiringDiragram.png)
+![Wiring Diagram](WiringDiragram.png)
 
 ### Detailed Setup and Usage
 Once all required materials have been gathered, the system can then be set up.  Some tape may be necessary for additional structural security of certain components to the final board, e.g., a motor driver. The IR sensors should be secured to the front of the vehicle, with both sensors facing downwards toward the area where a line is expected to be seen. Both boards should be flashed with appropriate firmware for their placement: A macro ```right``` should only be defined in ```main.c``` for the right side board. Lastly, both wheels should be attached to a motor, and the motor then appropriately mounted to the chassis. It is then important to consult the wiring diagram for properly connecting each component together.
 
 Once the project has been set up, the robot should be ready for usage. Draw some pattern on the ground, being careful to avoid excessively small or sharp distances smaller than about the diameter of one of the wheels, where the robot should follow. When both are sensing, the robot should continue straight. When only one sensor is detecting, the side with the sensor not detecting should have it's motor disabled. When both do not sense, then the robot should stop moving. Please consult the finite state machine diagram for a more detailed view:
-[FSM Model](58F1D1B7-348A-478D-A0A1-7C6BF3568DC1.jpg)
+![FSM Model](58F1D1B7-348A-478D-A0A1-7C6BF3568DC1.jpg)
 The zip only contains files related to the motor driver. 
   
 ## Development Progress
