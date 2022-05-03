@@ -1,6 +1,7 @@
 
+  
 # line-follower
-Project for CS6780/5780
+Line Follower Project for CS6780/5780
 ____
 ### Team
  - Brian Schnepp
@@ -37,6 +38,28 @@ Once all required materials have been gathered, the system can then be set up.  
 Once the project has been set up, the robot should be ready for usage. Draw some pattern on the ground, being careful to avoid excessively small or sharp distances smaller than about the diameter of one of the wheels, where the robot should follow. When both are sensing, the robot should continue straight. When only one sensor is detecting, the side with the sensor not detecting should have it's motor disabled. When both do not sense, then the robot should stop moving. Please consult the finite state machine diagram for a more detailed view:
 ![FSM Model](58F1D1B7-348A-478D-A0A1-7C6BF3568DC1.jpg)
 The zip only contains files related to the motor driver. 
-  
+
+### Used Protocols and Peripherals
+| Protocol/Peripheral  | Usage  |
+|---|---|
+| UART | Board-to-board communication |
+| Timers | Control speed and activation of motors |
+| Modeling | Guided software design and implementation |
+| LEDs | Visualize intended direction of robot |
+| Button | Debug functionality of sensor (removed in final result) |
+| ADC | Retained current sense functionality |  
+
 ## Development Progress
-TODO
+The project began with the simple goal of creating a simple robot capable of following a single straight line. Overall, expectations were exceeded with the project, and more than the expected goals were achieved.
+
+The first milestone was to implement and integrate the IR sensor module. A particular step was to either build the necessary component from scratch, or to evaluate different prebuilt modules. For the former method, some evaluation was done with a light sensor and some resistors to get a good quality signal out of it. However, as this would require placing breadboards and adding weight and unnecessary complexity to the project, a prebuilt module was evaluated.
+
+For this first part, a sensor was chosen which had an integrated sensor and was able to send a signal. Due to some unexpected challenges in usage of the device however, it was not feasible to integrate it into the project. Instead, as it produced signals which were hard to analyze, a different module was chosen. This new module had a mechanism for selection of range, and a simple digital signal if something was within this range and absorbed the light. This was able to be re-integrated into the project fairly quickly, as the signal could be directly read by the STM32, and not require analysis of a pulsing signal which was difficult to detect with the logic analyzer, and thus be difficult to sense with either digital input pins or an ADC.
+
+Next, driving the motors was required. Code from the motor lab was adapted with new setup code and some additional work from previous labs together to carefully control the motor. A core detail is that the motor labs required 6V for their motors, but the motors used for this project expect 12V input. Doing so quickly allowed for a much higher speed to be reached, along with more predictable control of the motor. Likewise, the motors were analyzed to see if the top gearbox could be removed to gain additional speed, which could be controlled in a more fine grained pattern with gears elsewhere, or even drive both wheels with a single motor with a servo. As more speed was not required for this, these options were not chosen, and the usage of one motor for both sides was retained.
+
+A large challenge was to attempt to integrate both motors to use a single board, which found many troubled steps along the way. For a still unknown reason, it does not appear possible to use TIM15 for the board, which would be needed to drive a second motor's enable signal by an appropriate PWM. Instead, the usage of TIM2 was evaluated, which had similar problems as available pins would have conflicted with other pins in use at the time, as well as being needed for a different function should this work. Similarly, other timers were evaluated and had similar problems: either there existed pin conflicts or restricted the use of other pins which were desired, did not meet the goals of the PWM well enough, or were already in use with a different function. Thus, the project instead makes use of two separate STM32 boards, and information between them was shared via UART.
+
+Finally, the entire system was brought together. Several different chassis were designed, 3D printed, and eventually integrated into the final project, aiming to build a complete whole project. This was done by careful evaluation of existing designs, modifications of existing designs, and custom designed mounts in some cases. For this project, an existing acrylic chassis and it's wheels were used to extend the base chassis already modified for this purpose, along with integration of mounting mechanisms to mount the IR sensors, STM32 development boards, and motor driver boards.
+
+Overall, this project was worked on between 6 and 9 hours a week on average, with some additional work done elsewhere as necessary to complete specific milestones, with the final count being about 50-60 hours of work total. We believe this project is of excellent quality, and showcases a great technical achievement.
