@@ -43,6 +43,7 @@ The zip only contains files related to the motor driver.
 | Protocol/Peripheral  | Usage  |
 |---|---|
 | UART | Board-to-board communication |
+| Interrupts | Managed for communication between STM32 and external devices |
 | Timers | Control speed and activation of motors |
 | Modeling | Guided software design and implementation |
 | LEDs | Visualize intended direction of robot |
