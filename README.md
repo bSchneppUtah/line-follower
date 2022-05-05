@@ -39,6 +39,14 @@ Once the project has been set up, the robot should be ready for usage. Draw some
 ![FSM Model](58F1D1B7-348A-478D-A0A1-7C6BF3568DC1.jpg)
 The zip only contains files related to the motor driver. 
 
+For flashing the boards, the specific process will vary depending on your operating system. For Windows or macOS, you will most likely need an IDE capable of communication with the STM32 board, such as a special version of Eclipse or STM Studio. For Linux, assuming the necessary packages are installed, it should be sufficient to run `make program` with one board plugged in at a time, for both boards.
+
+For Debian and Debian-related distributions (Ubuntu, Linux Mint, etc.), the packages
+```
+stlink-tools gcc-arm-none-eabi binutils-arm-none-eabi
+```
+should be sufficient.
+
 ### Used Protocols and Peripherals
 | Protocol/Peripheral  | Usage  |
 |---|---|
